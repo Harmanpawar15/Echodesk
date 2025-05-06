@@ -9,11 +9,32 @@ export default function VoiceAssistant() {
     { role: 'user' | 'assistant'; content: string }[]
   >([]);
   const [isTyping, setIsTyping] = useState(false);
+  const [hasInteracted, setHasInteracted] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
+    // Load messages and interaction state from localStorage on initial load
+    const storedMessages = localStorage.getItem('chatMessages');
+    const storedHasInteracted = localStorage.getItem('hasInteracted');
+
+    if (storedMessages) {
+      setMessages(JSON.parse(storedMessages));
+    }
+    if (storedHasInteracted === 'true') {
+      setHasInteracted(true);
+    }
+
+    // Scroll to the bottom when a new message is added
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, isTyping]);
+  }, []);
+
+  useEffect(() => {
+    // Save messages to localStorage whenever the messages state changes
+    if (messages.length > 0) {
+      localStorage.setItem('chatMessages', JSON.stringify(messages));
+      localStorage.setItem('hasInteracted', 'true'); // Mark interaction
+    }
+  }, [messages]);
 
   const startListening = () => {
     const SpeechRecognition =
@@ -37,6 +58,7 @@ export default function VoiceAssistant() {
     recognition.onresult = (event: any) => {
       const text = event.results[0][0].transcript;
       generateResponse(text);
+      setHasInteracted(true);
     };
 
     recognition.onerror = (event: any) => {
@@ -80,15 +102,18 @@ export default function VoiceAssistant() {
     }
   };
 
+  const clearChat = () => {
+    setMessages([]);
+    setHasInteracted(false);
+    localStorage.removeItem('chatMessages');
+    localStorage.removeItem('hasInteracted'); // Remove interaction flag from localStorage
+  };
+
   return (
-    <div className="flex items-center justify-center min-h-screen px-4 ">
+    <div className="flex items-center justify-center min-h-screen px-4">
       <div className="bg-white rounded-3xl shadow-xl p-8 max-w-xl w-full space-y-6">
-        <h2 className="text-3xl font-bold text-center text-gray-900">
-          🎙️ Echodesk
-        </h2>
-        <p className="text-center text-gray-500">
-          Your personal career coach powered by voice + AI
-        </p>
+        <h2 className="text-3xl font-bold text-center text-gray-900">🎙️ Echodesk</h2>
+        <p className="text-center text-gray-500">Your personal career coach powered by voice + AI</p>
 
         <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
           {messages.map((msg, index) => (
@@ -97,9 +122,7 @@ export default function VoiceAssistant() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
-              className={`flex items-start gap-2 ${
-                msg.role === 'user' ? 'justify-end' : 'justify-start'
-              }`}
+              className={`flex items-start gap-2 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               {msg.role === 'assistant' && (
                 <div className="flex-shrink-0 bg-indigo-500 text-white w-8 h-8 flex items-center justify-center rounded-full">
@@ -109,9 +132,7 @@ export default function VoiceAssistant() {
 
               <div
                 className={`p-4 rounded-xl max-w-[80%] text-sm whitespace-pre-wrap ${
-                  msg.role === 'user'
-                    ? 'bg-green-100 text-right ml-auto'
-                    : 'bg-indigo-100 text-left'
+                  msg.role === 'user' ? 'bg-green-100 text-right ml-auto' : 'bg-indigo-100 text-left'
                 }`}
               >
                 {msg.content}
@@ -151,6 +172,16 @@ export default function VoiceAssistant() {
         >
           {listening ? 'Listening...' : 'Start Talking'}
         </button>
+
+        {/* Floating action button for clearing chat */}
+        {hasInteracted && (
+          <button
+            onClick={clearChat}
+            className="fixed bottom-6 right-6 bg-indigo-500 hover:bg-indigo-600 text-white p-4 rounded-full shadow-xl transition duration-300"
+          >
+            <span className="text-2xl">🧹</span>
+          </button>
+        )}
       </div>
     </div>
   );
