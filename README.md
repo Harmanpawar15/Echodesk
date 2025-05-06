@@ -1,36 +1,39 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🎙️ Echodesk – Your Voice-Driven Career Coach
 
-## Getting Started
+![React](https://img.shields.io/badge/Built%20with-React-blue?logo=react)
+![Tailwind](https://img.shields.io/badge/Styled%20with-Tailwind%20CSS-38B2AC?logo=tailwindcss)
+![OpenRouter](https://img.shields.io/badge/Powered%20by-OpenRouter.ai-000000?logo=openai)
 
-First, run the development server:
+Echodesk is a voice-enabled career assistant built with **React**, **Tailwind CSS**, and **OpenRouter** AI models. Talk to your AI coach and get career advice in real-time — through beautiful chat bubbles, voice input, and smooth UI animations.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+---
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## ✨ Features
 
-## Learn More
+- 🎤 Voice input with Web Speech API
+- 💬 Chat bubble UI inspired by Headstarter
+- 🧠 Career coaching via OpenRouter GPT models
+- ⏳ Typing indicator while AI is generating response
+- ✨ Smooth animations + avatars
+- 🛠️ Error feedback handling
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 🚀 Tech Stack
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- **Frontend**: React (Next.js with `app/` router), Tailwind CSS
+- **Voice**: Web Speech API (SpeechRecognition)
+- **AI Backend**: OpenRouter.ai
+- **UI Polish**: Avatars, animated chat bubbles, fade-in transitions
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🧪 Setup Instructions
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. **Clone the Repo**
+
+   ```bash
+   git clone https://github.com/your-username/echodesk.git
+   cd echodesk
