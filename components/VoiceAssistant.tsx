@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
@@ -10,29 +11,23 @@ export default function VoiceAssistant() {
   >([]);
   const [isTyping, setIsTyping] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
+  const [error, setError] = useState<string | null>(null); // ✅ Error state
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    // Load messages and interaction state from localStorage on initial load
     const storedMessages = localStorage.getItem('chatMessages');
     const storedHasInteracted = localStorage.getItem('hasInteracted');
 
-    if (storedMessages) {
-      setMessages(JSON.parse(storedMessages));
-    }
-    if (storedHasInteracted === 'true') {
-      setHasInteracted(true);
-    }
+    if (storedMessages) setMessages(JSON.parse(storedMessages));
+    if (storedHasInteracted === 'true') setHasInteracted(true);
 
-    // Scroll to the bottom when a new message is added
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, []);
 
   useEffect(() => {
-    // Save messages to localStorage whenever the messages state changes
     if (messages.length > 0) {
       localStorage.setItem('chatMessages', JSON.stringify(messages));
-      localStorage.setItem('hasInteracted', 'true'); // Mark interaction
+      localStorage.setItem('hasInteracted', 'true');
     }
   }, [messages]);
 
@@ -43,37 +38,44 @@ export default function VoiceAssistant() {
         (window as any).webkitSpeechRecognition);
 
     if (!SpeechRecognition) {
-      alert('Your browser does not support Speech Recognition');
+      setError('⚠️ Your browser does not support Speech Recognition.');
       return;
     }
 
-    const recognition = new SpeechRecognition();
-    recognition.continuous = false;
-    recognition.lang = 'en-US';
-    recognition.interimResults = false;
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.lang = 'en-US';
+      recognition.interimResults = false;
 
-    recognition.start();
-    setListening(true);
+      recognition.start();
+      setListening(true);
+      setError(null); // clear old errors
 
-    recognition.onresult = (event: any) => {
-      const text = event.results[0][0].transcript;
-      generateResponse(text);
-      setHasInteracted(true);
-    };
+      recognition.onresult = (event: any) => {
+        const text = event.results[0][0].transcript;
+        generateResponse(text);
+        setHasInteracted(true);
+      };
 
-    recognition.onerror = (event: any) => {
-      console.error('Speech recognition error:', event);
-      setListening(false);
-    };
+      recognition.onerror = (event: any) => {
+        console.error('Speech recognition error:', event);
+        setError('⚠️ Could not access microphone. Please check permissions.');
+        setListening(false);
+      };
 
-    recognition.onend = () => {
-      setListening(false);
-    };
+      recognition.onend = () => {
+        setListening(false);
+      };
+    } catch (err) {
+      setError('⚠️ Unable to access microphone. Please try again.');
+    }
   };
 
   const generateResponse = async (inputText: string) => {
     setMessages((prev) => [...prev, { role: 'user', content: inputText }]);
     setIsTyping(true);
+    setError(null); // clear any old error
 
     try {
       const res = await fetch('/api/gpt', {
@@ -88,15 +90,20 @@ export default function VoiceAssistant() {
         }),
       });
 
+      if (!res.ok) throw new Error('API failed');
+
       const data = await res.json();
-      const reply = data.choices?.[0]?.message?.content || 'Sorry, no response.';
+      const reply = data.choices?.[0]?.message?.content;
+
+      if (!reply) {
+        setError('⚠️ Assistant didn’t respond. Try again.');
+        return;
+      }
+
       setMessages((prev) => [...prev, { role: 'assistant', content: reply }]);
     } catch (err) {
       console.error('API error:', err);
-      setMessages((prev) => [
-        ...prev,
-        { role: 'assistant', content: '⚠️ Sorry, something went wrong. Please try again.' },
-      ]);
+      setError('⚠️ Something went wrong while contacting the assistant.');
     } finally {
       setIsTyping(false);
     }
@@ -105,8 +112,9 @@ export default function VoiceAssistant() {
   const clearChat = () => {
     setMessages([]);
     setHasInteracted(false);
+    setError(null);
     localStorage.removeItem('chatMessages');
-    localStorage.removeItem('hasInteracted'); // Remove interaction flag from localStorage
+    localStorage.removeItem('hasInteracted');
   };
 
   return (
@@ -114,6 +122,13 @@ export default function VoiceAssistant() {
       <div className="bg-white rounded-3xl shadow-xl p-8 max-w-xl w-full space-y-6">
         <h2 className="text-3xl font-bold text-center text-gray-900">🎙️ Echodesk</h2>
         <p className="text-center text-gray-500">Your personal career coach powered by voice + AI</p>
+
+        {/* Error UI */}
+        {error && (
+          <div className="bg-red-100 text-red-700 px-4 py-2 text-sm rounded-xl">
+            {error}
+          </div>
+        )}
 
         <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
           {messages.map((msg, index) => (
@@ -129,7 +144,6 @@ export default function VoiceAssistant() {
                   🤖
                 </div>
               )}
-
               <div
                 className={`p-4 rounded-xl max-w-[80%] text-sm whitespace-pre-wrap ${
                   msg.role === 'user' ? 'bg-green-100 text-right ml-auto' : 'bg-indigo-100 text-left'
@@ -137,7 +151,6 @@ export default function VoiceAssistant() {
               >
                 {msg.content}
               </div>
-
               {msg.role === 'user' && (
                 <div className="flex-shrink-0 bg-green-500 text-white w-8 h-8 flex items-center justify-center rounded-full">
                   🧑
@@ -173,7 +186,6 @@ export default function VoiceAssistant() {
           {listening ? 'Listening...' : 'Start Talking'}
         </button>
 
-        {/* Floating action button for clearing chat */}
         {hasInteracted && (
           <button
             onClick={clearChat}
@@ -186,3 +198,4 @@ export default function VoiceAssistant() {
     </div>
   );
 }
+
